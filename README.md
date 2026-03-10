@@ -61,7 +61,7 @@ cd "SQL Server MCP"
 
 # 2. Create a Northwind database in Azure SQL and populate it with schema and data
 #    (create the database first via the Azure Portal or Azure CLI, then run the script)
-sqlcmd -S sql-demos.database.windows.net -d Northwind -G -i Northwind.sql
+sqlcmd -S sql-demos.database.windows.net -d Northwind -G -i northwind-database-create.sql
 
 # 3. Deploy to Azure Container Apps
 .\deploy.ps1
@@ -77,7 +77,7 @@ curl https://<your-app-url>/health
 
 ### Set Up the Northwind Database
 
-Before deploying the MCP server, you need a Northwind database in Azure SQL. The included `Northwind.sql` script creates all the tables, views, stored procedures, and sample data — but it does **not** create the database itself.
+Before deploying the MCP server, you need a Northwind database in Azure SQL. The included `northwind-database-create.sql` script creates all the tables, views, stored procedures, and sample data — but it does **not** create the database itself.
 
 #### 1. Create an Azure SQL Database
 
@@ -93,10 +93,10 @@ az sql db create `
 
 #### 2. Run the Northwind Setup Script
 
-Connect to the database and run `Northwind.sql` to create the schema and populate it with data:
+Connect to the database and run `northwind-database-create.sql` to create the schema and populate it with data:
 
 ```powershell
-sqlcmd -S sql-demos.database.windows.net -d Northwind -G -i Northwind.sql
+sqlcmd -S sql-demos.database.windows.net -d Northwind -G -i northwind-database-create.sql
 ```
 
 This creates:
@@ -287,7 +287,8 @@ To point this at a different SQL Server or database:
 | `deploy.ps1` | PowerShell deployment script for Azure Container Apps |
 | `test-local.ps1` | PowerShell script to build and run the server locally in Docker |
 | `grant-db-access.sql` | SQL script to grant managed identity database access |
-| `Northwind.sql` | Creates all Northwind tables, views, procedures, and sample data (run against an existing database) |
+| `northwind-database-create.sql` | Creates all Northwind tables, views, procedures, and sample data (run against an existing database) |
+| `LICENSE` | MIT license |
 | `deployment-info.json` | Auto-generated deployment metadata (git-ignored) |
 
 ## Monitoring

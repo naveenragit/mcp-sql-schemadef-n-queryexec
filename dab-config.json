@@ -1,0 +1,394 @@
+{
+  "$schema": "https://github.com/Azure/data-api-builder/releases/download/v1.7.83-rc/dab.draft.schema.json",
+  "data-source": {
+    "database-type": "mssql",
+    "connection-string": "@env('MSSQL_CONNECTION_STRING')"
+  },
+  "runtime": {
+    "host": {
+      "mode": "production",
+      "cors": {
+        "origins": ["*"], 
+        "allow-credentials": false
+      },
+      "authentication": {
+        "provider": "StaticWebApps"
+      }
+    },
+    "mcp": {
+      "enabled": true,
+      "dml-tools": {
+        "describe-entities": true,
+        "read-records": true,
+        "create-record": false,
+        "update-record": false,
+        "delete-record": false,
+        "execute-entity": false
+      }
+    },
+    "health": {
+      "enabled": true,
+      "roles": ["anonymous"]
+    }
+  },
+  "entities": {
+    "CustomerAndSuppliersByCity": {
+      "description": "Combined list of customers and suppliers organized by city, showing company name, contact name, and whether the record is a Customer or Supplier",
+      "source": {
+        "object": "Customer and Suppliers by City",
+        "type": "view",
+        "key-fields": ["CompanyName", "Relationship"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "City", "description": "City where the customer or supplier is located" },
+        { "name": "CompanyName", "description": "Name of the customer or supplier company", "primaryKey": true },
+        { "name": "ContactName", "description": "Name of the primary contact person at the company" },
+        { "name": "Relationship", "description": "Indicates whether the record is a 'Customers' or 'Suppliers' entry", "primaryKey": true }
+      ]
+    },
+    "AlphabeticalListOfProducts": {
+      "description": "Alphabetical listing of all products with their category names and full product details including pricing and inventory levels",
+      "source": {
+        "object": "Alphabetical list of products",
+        "type": "view",
+        "key-fields": ["ProductID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "ProductID", "description": "Unique identifier for the product", "primaryKey": true },
+        { "name": "ProductName", "description": "Display name of the product" },
+        { "name": "SupplierID", "description": "Foreign key to the supplier providing this product" },
+        { "name": "CategoryID", "description": "Foreign key to the product category" },
+        { "name": "QuantityPerUnit", "description": "Standard packaging description (e.g., '12 bottles per case', '1kg pkg')" },
+        { "name": "UnitPrice", "description": "Current retail price per unit in USD" },
+        { "name": "UnitsInStock", "description": "Current inventory count available for purchase" },
+        { "name": "UnitsOnOrder", "description": "Quantity ordered from supplier but not yet received" },
+        { "name": "ReorderLevel", "description": "Minimum stock level that triggers a reorder from supplier" },
+        { "name": "Discontinued", "description": "True (1) if the product is no longer available for sale, False (0) if active" },
+        { "name": "CategoryName", "description": "Name of the product category (e.g., Beverages, Condiments, Seafood)" }
+      ]
+    },
+    "CurrentProductList": {
+      "description": "Simple list of currently active (non-discontinued) products showing only ProductID and ProductName",
+      "source": {
+        "object": "Current Product List",
+        "type": "view",
+        "key-fields": ["ProductID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "ProductID", "description": "Unique identifier for the product", "primaryKey": true },
+        { "name": "ProductName", "description": "Display name of the product" }
+      ]
+    },
+    "OrdersQry": {
+      "description": "Orders with full customer information including company name, address, city, region, postal code, and country - useful for order lookups with customer details. For date filters use OData v4 DateTimeOffset: e.g. OrderDate ge 1997-01-01T00:00:00Z and OrderDate lt 1998-01-01T00:00:00Z (no quotes around dates).",
+      "source": {
+        "object": "Orders Qry",
+        "type": "view",
+        "key-fields": ["OrderID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "OrderID", "description": "Unique identifier for the order", "primaryKey": true },
+        { "name": "CustomerID", "description": "Five-character customer identifier code" },
+        { "name": "EmployeeID", "description": "Foreign key to the employee who processed the order" },
+        { "name": "OrderDate", "description": "Date when the order was placed (DateTimeOffset - filter example: OrderDate ge 1997-01-01T00:00:00Z)" },
+        { "name": "RequiredDate", "description": "Date by which the customer requested delivery (DateTimeOffset - filter example: RequiredDate le 1997-12-31T00:00:00Z)" },
+        { "name": "ShippedDate", "description": "Actual date the order was shipped, null if not yet shipped (DateTimeOffset - filter example: ShippedDate ge 1997-01-01T00:00:00Z and ShippedDate lt 1998-01-01T00:00:00Z)" },
+        { "name": "ShipVia", "description": "Foreign key to the shipping company used for delivery" },
+        { "name": "Freight", "description": "Shipping freight charge in USD" },
+        { "name": "ShipName", "description": "Name of the recipient for the shipment" },
+        { "name": "ShipAddress", "description": "Street address for the shipment delivery" },
+        { "name": "ShipCity", "description": "City for the shipment delivery" },
+        { "name": "ShipRegion", "description": "State or region for the shipment delivery (may be null)" },
+        { "name": "ShipPostalCode", "description": "Postal or ZIP code for the shipment delivery" },
+        { "name": "ShipCountry", "description": "Country for the shipment delivery" },
+        { "name": "CompanyName", "description": "Name of the customer company that placed the order" },
+        { "name": "Address", "description": "Street address of the customer company" },
+        { "name": "City", "description": "City where the customer company is located" },
+        { "name": "Region", "description": "State or region of the customer company (may be null)" },
+        { "name": "PostalCode", "description": "Postal or ZIP code of the customer company" },
+        { "name": "Country", "description": "Country where the customer company is located" }
+      ]
+    },
+    "ProductsAboveAveragePrice": {
+      "description": "Products with unit prices above the overall average product price - useful for identifying premium or high-value products",
+      "source": {
+        "object": "Products Above Average Price",
+        "type": "view",
+        "key-fields": ["ProductName"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "ProductName", "description": "Display name of the product", "primaryKey": true },
+        { "name": "UnitPrice", "description": "Current retail price per unit in USD (all values exceed the average product price)" }
+      ]
+    },
+    "ProductsByCategory": {
+      "description": "Products grouped by category showing category name, product name, quantity per unit, units in stock, and discontinued status",
+      "source": {
+        "object": "Products by Category",
+        "type": "view",
+        "key-fields": ["CategoryName", "ProductName"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "CategoryName", "description": "Name of the product category (e.g., Beverages, Condiments, Seafood)", "primaryKey": true },
+        { "name": "ProductName", "description": "Display name of the product", "primaryKey": true },
+        { "name": "QuantityPerUnit", "description": "Standard packaging description (e.g., '12 bottles per case', '1kg pkg')" },
+        { "name": "UnitsInStock", "description": "Current inventory count available for purchase" },
+        { "name": "Discontinued", "description": "True (1) if the product is no longer available for sale, False (0) if active" }
+      ]
+    },
+    "QuarterlyOrders": {
+      "description": "Distinct customers who placed orders in 1997, showing customer ID, company name, city, and country",
+      "source": {
+        "object": "Quarterly Orders",
+        "type": "view",
+        "key-fields": ["CustomerID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "CustomerID", "description": "Five-character unique customer identifier code", "primaryKey": true },
+        { "name": "CompanyName", "description": "Name of the customer company" },
+        { "name": "City", "description": "City where the customer is located" },
+        { "name": "Country", "description": "Country where the customer is located" }
+      ]
+    },
+    "Invoices": {
+      "description": "Comprehensive invoice details combining orders, customers, employees, shippers, products, and order details with calculated extended prices and freight costs. IMPORTANT: This returns individual line items, not aggregates. For date filters use OData v4 DateTimeOffset format without quotes, e.g. filter: ShippedDate ge 1997-01-01T00:00:00Z and ShippedDate lt 1998-01-01T00:00:00Z. Supported filter operators: eq, ne, gt, ge, lt, le, and, or, not. String filters: contains(Field,'value'), startswith(Field,'value'), endswith(Field,'value'). Do NOT use year(), datetime'...', or quoted date strings.",
+      "source": {
+        "object": "Invoices",
+        "type": "view",
+        "key-fields": ["OrderID", "ProductID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "ShipName", "description": "Name of the recipient for the shipment" },
+        { "name": "ShipAddress", "description": "Street address for the shipment delivery" },
+        { "name": "ShipCity", "description": "City for the shipment delivery" },
+        { "name": "ShipRegion", "description": "State or region for the shipment delivery (may be null)" },
+        { "name": "ShipPostalCode", "description": "Postal or ZIP code for the shipment delivery" },
+        { "name": "ShipCountry", "description": "Country for the shipment delivery" },
+        { "name": "CustomerID", "description": "Five-character unique customer identifier code" },
+        { "name": "CustomerName", "description": "Name of the customer company on the invoice" },
+        { "name": "Address", "description": "Street address of the customer" },
+        { "name": "City", "description": "City where the customer is located" },
+        { "name": "Region", "description": "State or region of the customer (may be null)" },
+        { "name": "PostalCode", "description": "Postal or ZIP code of the customer" },
+        { "name": "Country", "description": "Country where the customer is located" },
+        { "name": "Salesperson", "description": "Full name of the sales employee who handled the order" },
+        { "name": "OrderID", "description": "Unique identifier for the order", "primaryKey": true },
+        { "name": "OrderDate", "description": "Date when the order was placed (DateTimeOffset - filter example: OrderDate ge 1997-01-01T00:00:00Z)" },
+        { "name": "RequiredDate", "description": "Date by which the customer requested delivery (DateTimeOffset - filter example: RequiredDate le 1997-12-31T00:00:00Z)" },
+        { "name": "ShippedDate", "description": "Actual date the order was shipped, null if not yet shipped (DateTimeOffset - filter example: ShippedDate ge 1997-01-01T00:00:00Z and ShippedDate lt 1998-01-01T00:00:00Z)" },
+        { "name": "ShipperName", "description": "Name of the shipping company used for delivery" },
+        { "name": "ProductID", "description": "Unique identifier for the product on this invoice line", "primaryKey": true },
+        { "name": "ProductName", "description": "Display name of the product" },
+        { "name": "UnitPrice", "description": "Price per unit in USD at the time of the order" },
+        { "name": "Quantity", "description": "Number of units ordered for this line item" },
+        { "name": "Discount", "description": "Discount percentage applied to this line item (0.0 to 1.0 scale)" },
+        { "name": "ExtendedPrice", "description": "Calculated line total: UnitPrice * Quantity * (1 - Discount) in USD" },
+        { "name": "Freight", "description": "Shipping freight charge for the entire order in USD" }
+      ]
+    },
+    "OrderDetailsExtended": {
+      "description": "Order line items with product names and calculated extended price (UnitPrice * Quantity * (1 - Discount))",
+      "source": {
+        "object": "Order Details Extended",
+        "type": "view",
+        "key-fields": ["OrderID", "ProductID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "OrderID", "description": "Unique identifier for the order", "primaryKey": true },
+        { "name": "ProductID", "description": "Unique identifier for the product on this order line", "primaryKey": true },
+        { "name": "ProductName", "description": "Display name of the product" },
+        { "name": "UnitPrice", "description": "Price per unit in USD at the time of the order" },
+        { "name": "Quantity", "description": "Number of units ordered for this line item" },
+        { "name": "Discount", "description": "Discount percentage applied to this line item (0.0 to 1.0 scale)" },
+        { "name": "ExtendedPrice", "description": "Calculated line total: UnitPrice * Quantity * (1 - Discount) in USD" }
+      ]
+    },
+    "OrderSubtotals": {
+      "description": "Subtotal amount for each order, calculated as the sum of extended prices across all line items in the order",
+      "source": {
+        "object": "Order Subtotals",
+        "type": "view",
+        "key-fields": ["OrderID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "OrderID", "description": "Unique identifier for the order", "primaryKey": true },
+        { "name": "Subtotal", "description": "Sum of all line item extended prices for this order in USD" }
+      ]
+    },
+    "ProductSalesFor1997": {
+      "description": "Product sales totals for the year 1997, grouped by category and product name, showing the total sales amount per product",
+      "source": {
+        "object": "Product Sales for 1997",
+        "type": "view",
+        "key-fields": ["CategoryName", "ProductName"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "CategoryName", "description": "Name of the product category (e.g., Beverages, Condiments, Seafood)", "primaryKey": true },
+        { "name": "ProductName", "description": "Display name of the product", "primaryKey": true },
+        { "name": "ProductSales", "description": "Total sales amount for this product in 1997 in USD" }
+      ]
+    },
+    "CategorySalesFor1997": {
+      "description": "Aggregated sales totals by product category for the year 1997",
+      "source": {
+        "object": "Category Sales for 1997",
+        "type": "view",
+        "key-fields": ["CategoryName"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "CategoryName", "description": "Name of the product category (e.g., Beverages, Condiments, Seafood)", "primaryKey": true },
+        { "name": "CategorySales", "description": "Total aggregated sales amount for this category in 1997 in USD" }
+      ]
+    },
+    "SalesByCategory": {
+      "description": "Sales totals grouped by category and product for orders placed in 1997, including category ID, category name, product name, and total product sales",
+      "source": {
+        "object": "Sales by Category",
+        "type": "view",
+        "key-fields": ["CategoryID", "ProductName"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "CategoryID", "description": "Unique identifier for the product category", "primaryKey": true },
+        { "name": "CategoryName", "description": "Name of the product category (e.g., Beverages, Condiments, Seafood)" },
+        { "name": "ProductName", "description": "Display name of the product", "primaryKey": true },
+        { "name": "ProductSales", "description": "Total sales amount for this product within this category in 1997 in USD" }
+      ]
+    },
+    "SalesTotalsByAmount": {
+      "description": "Orders with subtotals exceeding $2,500 that were shipped in 1997, including sale amount, order ID, company name, and shipped date",
+      "source": {
+        "object": "Sales Totals by Amount",
+        "type": "view",
+        "key-fields": ["OrderID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "SaleAmount", "description": "Total sale amount for the order in USD (only orders exceeding $2,500)" },
+        { "name": "OrderID", "description": "Unique identifier for the order", "primaryKey": true },
+        { "name": "CompanyName", "description": "Name of the customer company that placed the order" },
+        { "name": "ShippedDate", "description": "Date when the order was shipped (DateTimeOffset - filter example: ShippedDate ge 1997-01-01T00:00:00Z and ShippedDate lt 1998-01-01T00:00:00Z)" }
+      ]
+    },
+    "SummaryOfSalesByQuarter": {
+      "description": "Summary of shipped orders with their subtotals, useful for quarterly sales analysis by shipped date. For date filters use OData v4 DateTimeOffset: e.g. ShippedDate ge 1997-01-01T00:00:00Z (no quotes around dates).",
+      "source": {
+        "object": "Summary of Sales by Quarter",
+        "type": "view",
+        "key-fields": ["OrderID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "ShippedDate", "description": "Date when the order was shipped, used for quarterly grouping (DateTimeOffset - filter example: ShippedDate ge 1997-01-01T00:00:00Z and ShippedDate lt 1998-01-01T00:00:00Z)" },
+        { "name": "OrderID", "description": "Unique identifier for the order", "primaryKey": true },
+        { "name": "Subtotal", "description": "Total order amount in USD (sum of all line item extended prices)" }
+      ]
+    },
+    "SummaryOfSalesByYear": {
+      "description": "Summary of shipped orders with their subtotals, useful for yearly sales analysis by shipped date. For date filters use OData v4 DateTimeOffset: e.g. ShippedDate ge 1997-01-01T00:00:00Z (no quotes around dates).",
+      "source": {
+        "object": "Summary of Sales by Year",
+        "type": "view",
+        "key-fields": ["OrderID"]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [{ "action": "read" }]
+        }
+      ],
+      "fields": [
+        { "name": "ShippedDate", "description": "Date when the order was shipped, used for yearly grouping (DateTimeOffset - filter example: ShippedDate ge 1997-01-01T00:00:00Z and ShippedDate lt 1998-01-01T00:00:00Z)" },
+        { "name": "OrderID", "description": "Unique identifier for the order", "primaryKey": true },
+        { "name": "Subtotal", "description": "Total order amount in USD (sum of all line item extended prices)" }
+      ]
+    }
+  }
+}

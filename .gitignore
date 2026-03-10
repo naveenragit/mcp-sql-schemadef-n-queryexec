@@ -1,0 +1,11 @@
+# Build artifacts
+deployment-info.json
+
+# IDE
+.vscode/
+*.code-workspace
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
